@@ -587,7 +587,7 @@ def draw_minimap():
     glMatrixMode(GL_MODELVIEW)
 
 def init_riddles():
-    global current_riddle, current_answer, scrambled_tiles, riddle_attempts, riddle_score
+    global current_riddle, current_answer, scrambled_tiles, riddle_attempts, riddle_score, riddle_tiles
     
     riddles = [
         {
@@ -617,11 +617,10 @@ def init_riddles():
     riddle_attempts = 0
     riddle_score = 0
     
-    # Position tiles in the world around the tree
-    global riddle_tiles
+    # Position tiles in the world around the player
     riddle_tiles = []
     angle_step = 360 / len(scrambled_tiles)
-    radius = 3.0  # Distance from tree
+    radius = 3.0  # Distance from player
     
     for i, letter in enumerate(scrambled_tiles):
         angle = math.radians(i * angle_step)
@@ -630,7 +629,7 @@ def init_riddles():
         riddle_tiles.append({"x": x, "z": z, "letter": letter, "collected": False})
     
 def check_riddle_answer():
-    global riddle_attempts, riddle_score, riddle_active, golden_apples, fruits, selected_tiles
+    global riddle_attempts, riddle_score, riddle_active, golden_apples, selected_tiles
     
     player_answer = ''.join(selected_tiles)
     if player_answer == current_answer:
@@ -663,9 +662,9 @@ def check_riddle_answer():
         if riddle_attempts >= 3:
             print("💔 Failed to solve the riddle. Try watering another tree.")
             riddle_active = False
+            selected_tiles = []  # Reset selected tiles
         else:
             # Reset for another attempt
-            #global selected_tiles
             selected_tiles = []
             for tile in riddle_tiles:
                 tile["collected"] = False
@@ -834,25 +833,31 @@ def special_keys(key,x,y):
 def water_plant():
     global watering_gauge, riddle_active, fruits
     
-    watered_tree = None
+    # Find the nearest tree
+    nearest_tree = None
+    min_distance = float('inf')
+    
     for x, z in trees:
         distance = math.sqrt((player["x"] - x)**2 + (player["z"] - z)**2)
-        if distance < 2.0:  # Increased range for easier watering
-            if watering_gauge >= 10:
-                watering_gauge -= 10
-                watered_tree = (x, z)
-                break
-            else:
-                print("💧 Not enough water to grow fruit! Need at least 10 water.")
-                return
+        if distance < min_distance:
+            min_distance = distance
+            nearest_tree = (x, z)
     
-    if watered_tree:
-        # Start riddle game instead of directly growing fruit
-        init_riddles()
-        riddle_active = True
-        print(f"🧩 Riddle: {current_riddle}")
-        print("Right-click on tiles in the correct order to solve the riddle!")
+    # Check if player is near a tree and has enough water
+    if min_distance < 2.0:  # Increased range for easier watering
+        if watering_gauge >= 10:
+            watering_gauge -= 10
+            # Start riddle game instead of directly growing fruit
+            init_riddles()
+            riddle_active = True
+            print(f"🧩 Riddle: {current_riddle}")
+            print("Right-click on tiles in the correct order to solve the riddle!")
+        else:
+            print("💧 Not enough water to grow fruit! Need at least 10 water.")
+    else:
+        print("🌳 No trees nearby to water!")
 
+    
 def update_watering():
     global watering_gauge
     if holding_p and check_river_collision():
@@ -975,22 +980,23 @@ def display():
             draw_text(10, 650, "🐉 Dragon needs golden apples to heal!")
     
     glEnable(GL_DEPTH_TEST)
-    # In your display function, add:
-if riddle_active:
-    draw_riddle_tiles()
     
-    # Draw riddle UI
-    glDisable(GL_DEPTH_TEST)
-    draw_text(300, 400, f"RIDDLE: {current_riddle}")
-    draw_text(300, 370, f"Your answer: {''.join(selected_tiles)}")
-    draw_text(300, 340, f"Attempts: {riddle_attempts}/3")
-    draw_text(300, 310, "Right-click on tiles in correct order!")
-    glEnable(GL_DEPTH_TEST)
+    # FIX THIS PART - the if statement should be inside the function
+    if riddle_active:
+        draw_riddle_tiles()
+        
+        # Draw riddle UI
+        glDisable(GL_DEPTH_TEST)
+        draw_text(300, 400, f"RIDDLE: {current_riddle}")
+        draw_text(300, 370, f"Your answer: {''.join(selected_tiles)}")
+        draw_text(300, 340, f"Attempts: {riddle_attempts}/3")
+        draw_text(300, 310, "Right-click on tiles in correct order!")
+        glEnable(GL_DEPTH_TEST)
+    
     glutSwapBuffers()
 
 def mouse(button, state, x, y):
-    global selected_tiles, riddle_attempts, riddle_score, riddle_active, golden_apples, fruits
-    
+    global selected_tiles, riddle_attempts, riddle_score, riddle_active, golden_apples, fruit
     if riddle_active and button == GLUT_RIGHT_BUTTON and state == GLUT_DOWN:
         # Convert screen coordinates to world coordinates
         glMatrixMode(GL_MODELVIEW)
