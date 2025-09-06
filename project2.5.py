@@ -155,104 +155,54 @@ def draw_player():
     glPushMatrix()
     glTranslatef(player["x"], player["y"], player["z"])  # player position
 
-    # Body (green)
+    # ---------------- Body ----------------
+    glColor3f(0.2, 0.6, 0.8)  # blue shirt
     glPushMatrix()
-    glColor3f(0.2, 0.6, 0.8)  # Blue body
-    glScalef(0.5, 1.0, 0.3)  # width, height, depth
+    glScalef(0.5, 1.0, 0.3)
     glutSolidCube(1.0)
     glPopMatrix()
 
-    # Head
+    # ---------------- Head ----------------
+    glColor3f(1.0, 0.8, 0.6)  # skin tone
     glPushMatrix()
-    glColor3f(1, 0.8, 0.6)  # Skin tone
-    glTranslatef(0, 0.75 + 0.25, 0)  # above body
+    glTranslatef(0, 0.75, 0)
     glutSolidSphere(0.25, 20, 20)
     glPopMatrix()
 
-    # Eyes
+    # ---------------- Eyes ----------------
+    glColor3f(0, 0, 0)
     glPushMatrix()
-    glColor3f(0, 0, 0)  # Black eyes
-    glTranslatef(-0.1, 0.9, 0.15)
+    glTranslatef(-0.1, 0.85, 0.12)
     glutSolidSphere(0.05, 10, 10)
     glTranslatef(0.2, 0, 0)
     glutSolidSphere(0.05, 10, 10)
     glPopMatrix()
 
-    # Enhanced Legs with knees and feet
-    # Left leg
-    glPushMatrix()
-    glColor3f(0.2, 0.2, 0.6)  # Dark blue legs
-    glTranslatef(-0.15, -0.25, 0)
-    
-    # Upper leg
-    glPushMatrix()
-    glScalef(0.1, 0.4, 0.1)
-    glutSolidCube(1.0)
-    glPopMatrix()
-    
-    # Lower leg
-    glPushMatrix()
-    glTranslatef(0, -0.4, 0)
-    glScalef(0.08, 0.4, 0.08)
-    glutSolidCube(1.0)
-    glPopMatrix()
-    
-    # Foot
-    glPushMatrix()
-    glTranslatef(0, -0.6, 0.05)
-    glScalef(0.1, 0.05, 0.2)
-    glutSolidCube(1.0)
-    glPopMatrix()
-    
-    glPopMatrix()
+    # ---------------- Legs ----------------
+    glColor3f(0.2, 0.2, 0.6)  # dark blue pants
+    for offset in [-0.15, 0.15]:
+        glPushMatrix()
+        glTranslatef(offset, -0.75, 0)
+        glScalef(0.1, 0.5, 0.1)
+        glutSolidCube(1.0)
+        glPopMatrix()
 
-    # Right leg
-    glPushMatrix()
-    glColor3f(0.2, 0.2, 0.6)  # Dark blue legs
-    glTranslatef(0.15, -0.25, 0)
-    
-    # Upper leg
-    glPushMatrix()
-    glScalef(0.1, 0.4, 0.1)
-    glutSolidCube(1.0)
-    glPopMatrix()
-    
-    # Lower leg
-    glPushMatrix()
-    glTranslatef(0, -0.4, 0)
-    glScalef(0.08, 0.4, 0.08)
-    glutSolidCube(1.0)
-    glPopMatrix()
-    
-    # Foot
-    glPushMatrix()
-    glTranslatef(0, -0.6, 0.05)
-    glScalef(0.1, 0.05, 0.2)
-    glutSolidCube(1.0)
-    glPopMatrix()
-    
-    glPopMatrix()
+    # ---------------- Hands ----------------
+    glColor3f(1.0, 0.8, 0.6)  # skin tone
+    for offset, rot in [(-0.3, 90), (0.3, -90)]:
+        glPushMatrix()
+        glTranslatef(offset, 0.25, 0)
+        glRotatef(rot, 0, 1, 0)
+        glRotatef(-20, 1, 0, 0)
+        gluCylinder(quad, 0.08, 0.08, 0.4, 12, 1)
+        glPopMatrix()
 
-    # Hands (skin-colored cylinders)
+    # ---------------- Cape ----------------
+    glColor3f(0.8, 0.1, 0.1)  # red cape
     glPushMatrix()
-    glColor3f(1, 0.8, 0.6)
-    glTranslatef(-0.35, 0.25, 0)  # left hand
-    glRotatef(-90, 0, 0, 1)
-    gluCylinder(quad, 0.08, 0.08, 0.4, 12, 1)
-    glPopMatrix()
-
-    glPushMatrix()
-    glColor3f(1, 0.8, 0.6)
-    glTranslatef(0.35, 0.25, 0)  # right hand
-    glRotatef(90, 0, 0, 1)
-    gluCylinder(quad, 0.08, 0.08, 0.4, 12, 1)
-    glPopMatrix()
-
-    # Cape
-    glPushMatrix()
-    glColor3f(0.8, 0.1, 0.1)  # Red cape
-    glTranslatef(0, -0.2, -0.1)
-    glScalef(0.6, 0.8, 0.05)
+    glTranslatef(0, 0, -0.2)
+    glRotatef(10, 1, 0, 0)
+    glScalef(0.6, 1.0, 0.05)
     glutSolidCube(1.0)
     glPopMatrix()
 
@@ -830,7 +780,13 @@ def display():
 
     glClearColor(0.5,0.7,0.9,1.0)
     glEnable(GL_DEPTH_TEST)
-    
+    #glEnable(GL_LIGHTING)
+    glEnable(GL_LIGHT0)
+    glEnable(GL_COLOR_MATERIAL)
+    glLightfv(GL_LIGHT0,GL_POSITION,[10.0,20.0,10.0,1.0])
+    glLightfv(GL_LIGHT0,GL_AMBIENT,[0.3,0.3,0.3,1.0])
+    glLightfv(GL_LIGHT0,GL_DIFFUSE,[0.8,0.8,0.8,1.0])
+
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     gluPerspective(60,WINDOW_W/float(WINDOW_H),0.1,200.0)
@@ -839,13 +795,13 @@ def display():
 
     set_isometric_camera()
 
-    # Draw scene
+    # Environment
     draw_ground()
-    draw_river()
-    #draw_mountain()
+    draw_river()      # Draw river first (behind trees)
+    #draw_mountain()   # Draw the mountain
     draw_trees()
-    draw_fruits()
-    draw_rocks()
+    draw_fruits()     # Draw fruits on top of trees
+    draw_rocks()      # Draw falling rocks
     
     update_watering()
     update_climbing()
@@ -853,14 +809,41 @@ def display():
     check_rock_collision()
     check_dragon_collision()
     
+
+    # Player
     draw_player()
+
+    # Dragon
     draw_dragon()
-    
+
     # HUD
     glDisable(GL_DEPTH_TEST)
+    #glDisable(GL_LIGHTING)
     draw_minimap()
-    draw_gauge()
+    draw_gauge()  # Draw the watering gauge
+    
+    # Status text
     draw_text(10,770,f"Apples: {golden_apples} | Lives: {lives} | Water: {watering_gauge}")
+    
+    if dragon_healed:
+        draw_text(10,740,"🐉 Dragon healed! Quest complete! ✅")
+    
+    if is_climbing:
+        draw_text(10,710,"🧗 Climbing mountain - watch for falling rocks!")
+    
+    if check_river_collision():
+        draw_text(10,680,"💧 Standing in river - collecting water!")
+    
+    # Check if player is near dragon
+    dragon_distance = math.sqrt((player["x"] - dragon_pos[0])**2 + 
+                               (player["y"] - dragon_pos[1])**2 + 
+                               (player["z"] - dragon_pos[2])**2)
+    if dragon_distance < 5.0:
+        if golden_apples > 0:
+            draw_text(10,650,"🐉 Press F to feed dragon a golden apple!")
+        else:
+            draw_text(10,650,"🐉 Dragon needs golden apples to heal!")
+    
     glEnable(GL_DEPTH_TEST)
 
     glutSwapBuffers()
