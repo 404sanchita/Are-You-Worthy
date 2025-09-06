@@ -830,13 +830,7 @@ def display():
 
     glClearColor(0.5,0.7,0.9,1.0)
     glEnable(GL_DEPTH_TEST)
-    glEnable(GL_LIGHTING)
-    glEnable(GL_LIGHT0)
-    glEnable(GL_COLOR_MATERIAL)
-    glLightfv(GL_LIGHT0,GL_POSITION,[10.0,20.0,10.0,1.0])
-    glLightfv(GL_LIGHT0,GL_AMBIENT,[0.3,0.3,0.3,1.0])
-    glLightfv(GL_LIGHT0,GL_DIFFUSE,[0.8,0.8,0.8,1.0])
-
+    
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     gluPerspective(60,WINDOW_W/float(WINDOW_H),0.1,200.0)
@@ -845,13 +839,13 @@ def display():
 
     set_isometric_camera()
 
-    # Environment
+    # Draw scene
     draw_ground()
-    draw_river()      # Draw river first (behind trees)
-    #draw_mountain()   # Draw the mountain
+    draw_river()
+    #draw_mountain()
     draw_trees()
-    draw_fruits()     # Draw fruits on top of trees
-    draw_rocks()      # Draw falling rocks
+    draw_fruits()
+    draw_rocks()
     
     update_watering()
     update_climbing()
@@ -859,43 +853,15 @@ def display():
     check_rock_collision()
     check_dragon_collision()
     
-
-    # Player
     draw_player()
-
-    # Dragon
     draw_dragon()
-
+    
     # HUD
     glDisable(GL_DEPTH_TEST)
-    glDisable(GL_LIGHTING)
     draw_minimap()
-    draw_gauge()  # Draw the watering gauge
-    
-    # Status text
+    draw_gauge()
     draw_text(10,770,f"Apples: {golden_apples} | Lives: {lives} | Water: {watering_gauge}")
-    
-    if dragon_healed:
-        draw_text(10,740,"🐉 Dragon healed! Quest complete! ✅")
-    
-    if is_climbing:
-        draw_text(10,710,"🧗 Climbing mountain - watch for falling rocks!")
-    
-    if check_river_collision():
-        draw_text(10,680,"💧 Standing in river - collecting water!")
-    
-    # Check if player is near dragon
-    dragon_distance = math.sqrt((player["x"] - dragon_pos[0])**2 + 
-                               (player["y"] - dragon_pos[1])**2 + 
-                               (player["z"] - dragon_pos[2])**2)
-    if dragon_distance < 5.0:
-        if golden_apples > 0:
-            draw_text(10,650,"🐉 Press F to feed dragon a golden apple!")
-        else:
-            draw_text(10,650,"🐉 Dragon needs golden apples to heal!")
-    
     glEnable(GL_DEPTH_TEST)
-    glEnable(GL_LIGHTING)
 
     glutSwapBuffers()
 
