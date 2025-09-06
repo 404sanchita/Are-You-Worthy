@@ -58,13 +58,7 @@ watering_gauge = 0
 max_gauge = 100
 golden_apples = 0
 lives = 3
-dragon_healed = False
 
-# ---------------------------
-# Dragon
-# ---------------------------
-dragon_pos = [MOUNTAIN_POS[0], MOUNTAIN_HEIGHT, MOUNTAIN_POS[2]]
-dragon_healed = False
 
 # ---------------------------
 # Mountain
@@ -866,4 +860,5 @@ def main():
     glutMainLoop()
 
 if __name__=="__main__":
+
     main()
