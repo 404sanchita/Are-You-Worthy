@@ -4,6 +4,9 @@ from OpenGL.GLU import *
 import math
 import random
 import time
+import os
+import sys
+import subprocess
 
 # ---------------------------
 # Window config
@@ -78,7 +81,7 @@ MOUNTAIN_POS = [0, 0, 0]  # Center of the map
 # ---------------------------
 # Dragon - positioned on top of mountain
 # ---------------------------
-dragon_pos = [MOUNTAIN_POS[0], MOUNTAIN_HEIGHT + 1, MOUNTAIN_POS[2]]  # On top of the mountain
+dragon_pos = [0, 1, 0]  
 
 # ---------------------------
 # Falling rocks
@@ -525,24 +528,24 @@ def draw_minimap():
     glEnd()
 
     # Mountain
-    glColor3f(0.5, 0.35, 0.25)
-    map_x = 20 + (MOUNTAIN_POS[0] + ENV_SIZE/2) * 130/ENV_SIZE
-    map_y = 20 + (MOUNTAIN_POS[2] + ENV_SIZE/2) * 130/ENV_SIZE  # no flip
-    glBegin(GL_QUADS)
-    glVertex2f(map_x-8, map_y-8)
-    glVertex2f(map_x+8, map_y-8)
-    glVertex2f(map_x+8, map_y+8)
-    glVertex2f(map_x-8, map_y+8)
-    glEnd()
+    # glColor3f(0.5, 0.35, 0.25)
+    # map_x = 20 + (MOUNTAIN_POS[0] + ENV_SIZE/2) * 130/ENV_SIZE
+    # map_y = 20 + (MOUNTAIN_POS[2] + ENV_SIZE/2) * 130/ENV_SIZE  # no flip
+    # glBegin(GL_QUADS)
+    # glVertex2f(map_x-8, map_y-8)
+    # glVertex2f(map_x+8, map_y-8)
+    # glVertex2f(map_x+8, map_y+8)
+    # glVertex2f(map_x-8, map_y+8)
+    # glEnd()
 
     # Dragon
-    glColor3f(0.7, 0.1, 0.1)
-    glBegin(GL_QUADS)
-    glVertex2f(map_x-3, map_y-3)
-    glVertex2f(map_x+3, map_y-3)
-    glVertex2f(map_x+3, map_y+3)
-    glVertex2f(map_x-3, map_y+3)
-    glEnd()
+    # glColor3f(0.7, 0.1, 0.1)
+    # glBegin(GL_QUADS)
+    # glVertex2f(map_x-3, map_y-3)
+    # glVertex2f(map_x+3, map_y-3)
+    # glVertex2f(map_x+3, map_y+3)
+    # glVertex2f(map_x-3, map_y+3)
+    # glEnd()
 
     # Trees
     glColor3f(0.4, 0.2, 0.1)
@@ -665,6 +668,16 @@ def keyboard(key, x, y):
             is_climbing = True
             print("🧗 Started climbing the mountain!")
 
+    elif key.lower() == 'n':
+     if dragon_healed:
+        print("🌟 Loading next level...")
+        # Replace current game with the next level
+        next_file = "project2.6.py"  # Path to the next level file
+        subprocess.Popen([sys.executable, next_file])
+        glutLeaveMainLoop()  # Close current window
+     else:
+        print("🐉 You must heal the dragon first before moving to the next level!")
+
 def keyboard_up(key, x, y):
     global holding_p
     key = key.decode('utf-8')
@@ -775,21 +788,20 @@ def feed_dragon():
 # Display
 # ---------------------------
 def display():
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
 
-    glClearColor(0.5,0.7,0.9,1.0)
+    glClearColor(0.5, 0.7, 0.9, 1.0)
     glEnable(GL_DEPTH_TEST)
-    #glEnable(GL_LIGHTING)
-    glEnable(GL_LIGHT0)
-    glEnable(GL_COLOR_MATERIAL)
-    glLightfv(GL_LIGHT0,GL_POSITION,[10.0,20.0,10.0,1.0])
-    glLightfv(GL_LIGHT0,GL_AMBIENT,[0.3,0.3,0.3,1.0])
-    glLightfv(GL_LIGHT0,GL_DIFFUSE,[0.8,0.8,0.8,1.0])
+
+    # Disable lighting
+    glDisable(GL_LIGHTING)
+    glDisable(GL_LIGHT0)
+    glEnable(GL_COLOR_MATERIAL)  # Keep this to allow glColor to work
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    gluPerspective(60,WINDOW_W/float(WINDOW_H),0.1,200.0)
+    gluPerspective(60, WINDOW_W/float(WINDOW_H), 0.1, 200.0)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
@@ -797,18 +809,17 @@ def display():
 
     # Environment
     draw_ground()
-    draw_river()      # Draw river first (behind trees)
-    #draw_mountain()   # Draw the mountain
+    draw_river()
+    #draw_mountain()
     draw_trees()
-    draw_fruits()     # Draw fruits on top of trees
-    draw_rocks()      # Draw falling rocks
-    
+    draw_fruits()
+    draw_rocks()
+
     update_watering()
     update_climbing()
     update_rocks()
     check_rock_collision()
     check_dragon_collision()
-    
 
     # Player
     draw_player()
@@ -818,21 +829,20 @@ def display():
 
     # HUD
     glDisable(GL_DEPTH_TEST)
-    #glDisable(GL_LIGHTING)
     draw_minimap()
-    draw_gauge()  # Draw the watering gauge
-    
+    draw_gauge()
+
     # Status text
-    draw_text(10,770,f"Apples: {golden_apples} | Lives: {lives} | Water: {watering_gauge}")
+    draw_text(10, 770, f"Apples: {golden_apples} | Lives: {lives} | Water: {watering_gauge}")
     
     if dragon_healed:
-        draw_text(10,740,"🐉 Dragon healed! Quest complete! ✅")
+        draw_text(10, 740, "🐉 Dragon healed! Quest complete! ✅")
     
     if is_climbing:
-        draw_text(10,710,"🧗 Climbing mountain - watch for falling rocks!")
+        draw_text(10, 710, "🧗 Climbing mountain - watch for falling rocks!")
     
     if check_river_collision():
-        draw_text(10,680,"💧 Standing in river - collecting water!")
+        draw_text(10, 680, "💧 Standing in river - collecting water!")
     
     # Check if player is near dragon
     dragon_distance = math.sqrt((player["x"] - dragon_pos[0])**2 + 
@@ -840,13 +850,13 @@ def display():
                                (player["z"] - dragon_pos[2])**2)
     if dragon_distance < 5.0:
         if golden_apples > 0:
-            draw_text(10,650,"🐉 Press F to feed dragon a golden apple!")
+            draw_text(10, 650, "🐉 Press F to feed dragon a golden apple!")
         else:
-            draw_text(10,650,"🐉 Dragon needs golden apples to heal!")
+            draw_text(10, 650, "🐉 Dragon needs golden apples to heal!")
     
     glEnable(GL_DEPTH_TEST)
-
     glutSwapBuffers()
+
 
 # ---------------------------
 # Main
