@@ -16,12 +16,6 @@ WINDOW_W, WINDOW_H = 1000, 800
 ENV_SIZE = 30.0
 TREE_COUNT = 20
 
-trees = []
-for _ in range(TREE_COUNT):
-    x = random.uniform(-ENV_SIZE/2 + 2, ENV_SIZE/2 - 2)
-    z = random.uniform(-ENV_SIZE/2 + 2, ENV_SIZE/2 - 2)
-    trees.append((x, z))
-
 # ---------------------------
 # River & watering system
 # ---------------------------
@@ -29,6 +23,19 @@ RIVER_X_START = -ENV_SIZE/2
 RIVER_X_END = -ENV_SIZE/2 + 3  # Width of river
 RIVER_Z_START = -ENV_SIZE/2
 RIVER_Z_END = ENV_SIZE/2
+
+# --- FIX: Ensure trees do not spawn in the river ---
+trees = []
+while len(trees) < TREE_COUNT:
+    x = random.uniform(-ENV_SIZE/2 + 2, ENV_SIZE/2 - 2)
+    z = random.uniform(-ENV_SIZE/2 + 2, ENV_SIZE/2 - 2)
+
+    # Check if the generated position is inside the river area
+    is_in_river = (RIVER_X_START <= x <= RIVER_X_END)
+
+    # If the tree is not in the river, add it to the list
+    if not is_in_river:
+        trees.append((x, z))
 watering = False  # True if player is collecting water
 
 # For fruits on trees
@@ -489,13 +496,13 @@ def draw_fruits():
             glPopMatrix()
 
 # Draw the mountain
-def draw_mountain():
-    glColor3f(0.5, 0.35, 0.25)  # Brown mountain
-    glPushMatrix()
-    glTranslatef(MOUNTAIN_POS[0], MOUNTAIN_POS[1], MOUNTAIN_POS[2])
-    glRotatef(-90, 1, 0, 0)
-    glutSolidCone(MOUNTAIN_RADIUS, MOUNTAIN_HEIGHT, 20, 20)
-    glPopMatrix()
+#def draw_mountain():
+ #   glColor3f(0.5, 0.35, 0.25)  # Brown mountain
+  #  glPushMatrix()
+   # glTranslatef(MOUNTAIN_POS[0], MOUNTAIN_POS[1], MOUNTAIN_POS[2])
+   # glRotatef(-90, 1, 0, 0)
+   # glutSolidCone(MOUNTAIN_RADIUS, MOUNTAIN_HEIGHT, 20, 20)
+    #glPopMatrix()
 
 # Draw falling rocks
 def draw_rocks():
@@ -544,33 +551,33 @@ def draw_minimap():
     glMatrixMode(GL_PROJECTION)
     glPushMatrix()
     glLoadIdentity()
-    gluOrtho2D(0, WINDOW_W, 0, WINDOW_H)
+    gluOrtho2D(0, WINDOW_W, 0, WINDOW_H)  # 2D overlay
     glMatrixMode(GL_MODELVIEW)
     glPushMatrix()
     glLoadIdentity()
 
-    # Minimap background
-    glColor4f(0.1,0.1,0.1,0.7)
+    # Minimap background (bottom-left)
+    glColor4f(0.1, 0.1, 0.1, 0.7)
     glBegin(GL_QUADS)
-    glVertex2f(10, WINDOW_H-10)
-    glVertex2f(160, WINDOW_H-10)
-    glVertex2f(160, WINDOW_H-160)
-    glVertex2f(10, WINDOW_H-160)
+    glVertex2f(10, 10)
+    glVertex2f(160, 10)
+    glVertex2f(160, 160)
+    glVertex2f(10, 160)
     glEnd()
 
     # Ground area
-    glColor3f(0.1,0.6,0.1)
+    glColor3f(0.1, 0.6, 0.1)
     glBegin(GL_QUADS)
-    glVertex2f(20, WINDOW_H-20)
-    glVertex2f(150, WINDOW_H-20)
-    glVertex2f(150, WINDOW_H-150)
-    glVertex2f(20, WINDOW_H-150)
+    glVertex2f(20, 20)
+    glVertex2f(150, 20)
+    glVertex2f(150, 150)
+    glVertex2f(20, 150)
     glEnd()
 
     # Mountain
-    glColor3f(0.5,0.35,0.25)
+    glColor3f(0.5, 0.35, 0.25)
     map_x = 20 + (MOUNTAIN_POS[0] + ENV_SIZE/2) * 130/ENV_SIZE
-    map_y = WINDOW_H-20-(MOUNTAIN_POS[2]+ENV_SIZE/2)*130/ENV_SIZE
+    map_y = 20 + (MOUNTAIN_POS[2] + ENV_SIZE/2) * 130/ENV_SIZE  # no flip
     glBegin(GL_QUADS)
     glVertex2f(map_x-8, map_y-8)
     glVertex2f(map_x+8, map_y-8)
@@ -578,8 +585,8 @@ def draw_minimap():
     glVertex2f(map_x-8, map_y+8)
     glEnd()
 
-    # Dragon on mountain
-    glColor3f(0.7,0.1,0.1)
+    # Dragon
+    glColor3f(0.7, 0.1, 0.1)
     glBegin(GL_QUADS)
     glVertex2f(map_x-3, map_y-3)
     glVertex2f(map_x+3, map_y-3)
@@ -588,10 +595,10 @@ def draw_minimap():
     glEnd()
 
     # Trees
-    glColor3f(0.4,0.2,0.1)
-    for x,z in trees:
+    glColor3f(0.4, 0.2, 0.1)
+    for x, z in trees:
         map_x = 20 + (x + ENV_SIZE/2) * 130/ENV_SIZE
-        map_y = WINDOW_H-20-(z+ENV_SIZE/2)*130/ENV_SIZE
+        map_y = 20 + (z + ENV_SIZE/2) * 130/ENV_SIZE  # no flip
         glBegin(GL_QUADS)
         glVertex2f(map_x-2, map_y-2)
         glVertex2f(map_x+2, map_y-2)
@@ -601,8 +608,8 @@ def draw_minimap():
 
     # Player
     map_x = 20 + (player["x"] + ENV_SIZE/2) * 130/ENV_SIZE
-    map_y = WINDOW_H-20-(player["z"] + ENV_SIZE/2)*130/ENV_SIZE
-    glColor3f(1,0,0)
+    map_y = 20 + (player["z"] + ENV_SIZE/2) * 130/ENV_SIZE  # no flip
+    glColor3f(1, 0, 0)
     glBegin(GL_QUADS)
     glVertex2f(map_x-3, map_y-3)
     glVertex2f(map_x+3, map_y-3)
@@ -614,6 +621,7 @@ def draw_minimap():
     glMatrixMode(GL_PROJECTION)
     glPopMatrix()
     glMatrixMode(GL_MODELVIEW)
+
 
 def set_isometric_camera():
     """
@@ -840,7 +848,7 @@ def display():
     # Environment
     draw_ground()
     draw_river()      # Draw river first (behind trees)
-    draw_mountain()   # Draw the mountain
+    #draw_mountain()   # Draw the mountain
     draw_trees()
     draw_fruits()     # Draw fruits on top of trees
     draw_rocks()      # Draw falling rocks
