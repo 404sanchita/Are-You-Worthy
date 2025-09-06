@@ -1053,7 +1053,7 @@ def main():
     glutKeyboardFunc(keyboard)
     glutSpecialFunc(special_keys)
     glutKeyboardUpFunc(keyboard_up)
-    glutMouseFunc(mouse)  # ADD THIS LINE
+    glutMouseFunc(mouse) 
 
     print("🐉 DRAGON QUEST GAME 🐉")
     print("=" * 40)
@@ -1077,3 +1077,4 @@ def main():
     
 if __name__=="__main__":
     main()
+
