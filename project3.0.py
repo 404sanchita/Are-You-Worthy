@@ -1,3 +1,4 @@
+
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -739,17 +740,11 @@ def check_rock_collision():
     return False
 
 def check_dragon_collision():
-    global golden_apples, dragon_healed
-    if golden_apples > 0:
-        distance = math.sqrt((player["x"] - dragon_pos[0])**2 + 
-                            (player["y"] - dragon_pos[1])**2 + 
-                            (player["z"] - dragon_pos[2])**2)
-        if distance < 3.0:
-            golden_apples -= 1
-            dragon_healed = True
-            print("🐉 Dragon healed! Thank you for the golden apple!")
-            return True
-    return False
+    distance = math.sqrt((player["x"] - dragon_pos[0])**2 + 
+                        (player["y"] - dragon_pos[1])**2 + 
+                        (player["z"] - dragon_pos[2])**2)
+    return distance < 3.0
+
 
 # ---------------------------
 # Input
@@ -1077,4 +1072,3 @@ def main():
     
 if __name__=="__main__":
     main()
-
