@@ -71,18 +71,16 @@ def draw_stars():
     for i, star in enumerate(stars):
         glPushMatrix()
         glTranslatef(star["x"], 15.0, star["z"])
-        glDisable(GL_LIGHTING)
         if i in connected_stars: glColor3f(0.0, 1.0, 0.0)
         else: glColor3f(1.0, 1.0, 0.8)
         glutSolidSphere(0.3, 10, 10)
         glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE)
         glColor4f(1.0, 1.0, 0.5, 0.3)
         glutSolidSphere(0.5, 8, 8)
-        glDisable(GL_BLEND); glEnable(GL_LIGHTING)
+        glDisable(GL_BLEND)
         glPopMatrix()
     
     if len(connected_stars) > 1:
-        glDisable(GL_LIGHTING)
         glColor3f(0.0, 0.8, 1.0)
         glLineWidth(2.0)
         is_loop = current_constellation and current_constellation[0] == current_constellation[-1]
@@ -93,11 +91,9 @@ def draw_stars():
             glVertex3f(star["x"], 15.0, star["z"])
         glEnd()
         glLineWidth(1.0)
-        glEnable(GL_LIGHTING)
 
 # (Other drawing functions like draw_sky, draw_minimap, etc. remain the same)
 def draw_sky():
-    glDisable(GL_LIGHTING)
     glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity()
     glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity()
     glBegin(GL_QUADS)
@@ -105,7 +101,6 @@ def draw_sky():
     glColor3f(0.05, 0.05, 0.2); glVertex3f(1, -1, -1); glVertex3f(-1, -1, -1)
     glEnd()
     glPopMatrix(); glMatrixMode(GL_PROJECTION); glPopMatrix(); glMatrixMode(GL_MODELVIEW)
-    glEnable(GL_LIGHTING)
 
 def draw_constellation_preview():
     if not constellation_active or not current_constellation: return
@@ -242,13 +237,11 @@ def display():
     glMatrixMode(GL_MODELVIEW); glLoadIdentity()
     set_isometric_camera()
 
-    glEnable(GL_DEPTH_TEST); glEnable(GL_LIGHTING); glEnable(GL_LIGHT0); glEnable(GL_COLOR_MATERIAL)
+    glEnable(GL_LIGHT0); glEnable(GL_COLOR_MATERIAL)
     light_position = [10.0, 15.0, 10.0, 1.0]; light_ambient = [0.2, 0.2, 0.3, 1.0]; light_diffuse = [0.6, 0.6, 0.8, 1.0]
     glLightfv(GL_LIGHT0, GL_POSITION, light_position); glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient); glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse)
 
     draw_ground(); draw_player(); draw_stars()
-
-    glDisable(GL_DEPTH_TEST); glDisable(GL_LIGHTING)
     
     if game_won:
         draw_text(None, WINDOW_H / 2, "YOU WIN! QUEST COMPLETE!", GLUT_BITMAP_TIMES_ROMAN_24)
@@ -265,8 +258,7 @@ def display():
             draw_text(150, WINDOW_H - 120, f"Time: {int(constellation_timer)}s")
         else:
             draw_text(10, WINDOW_H - 300, "Press SPACE to start the quest")
-            
-    glEnable(GL_DEPTH_TEST)
+        
     glutSwapBuffers()
 
 # ---------------------------
