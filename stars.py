@@ -4,9 +4,6 @@ from OpenGL.GLU import *
 import math
 import random
 
-# ---------------------------
-# Window config
-# ---------------------------
 WINDOW_W, WINDOW_H = 800, 600
 
 # Player
@@ -27,7 +24,6 @@ constellation_active = False
 stars = []
 current_constellation = []
 connected_stars = []
-# *** REPLACED "bear" with "house" for an easier shape ***
 constellation_shapes = {
     "dragon": [(0, 0), (2, 1), (4, 0), (3, -2), (1, -3), (-1, -2), (-2, 0), (0, 2)],
     "house": [(0, 0), (4, 0), (4, 4), (0, 4), (0, 0), (2, 6), (4, 4)], # A simple house shape
@@ -164,7 +160,6 @@ def draw_minimap():
 # ---------------------------
 
 def reset_game():
-    """Resets the entire game state to the beginning."""
     global player_lives, game_score, game_won, game_over, constellation_active
     player["x"], player["z"] = 0.0, 0.0
     player_lives = 3
@@ -195,7 +190,6 @@ def start_constellation_game():
     print(f"A new challenge appears! Find the {current_shape.upper()} shape!")
 
 def check_constellation_completion():
-    """UPDATED: Handles win, loss of life, and game over conditions."""
     global constellation_active, game_score, player_lives, game_won, game_over, connected_stars
     
     if len(connected_stars) == len(stars):
@@ -227,9 +221,6 @@ def find_nearest_star(x, z):
         if distance < min_distance and distance < 2.0:
             min_distance, nearest_star_idx = distance, star["index"]
     return nearest_star_idx
-# ---------------------------
-# Scene Rendering
-# ---------------------------
 
 def draw_text(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
     glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity(); gluOrtho2D(0, WINDOW_W, 0, WINDOW_H)
@@ -259,7 +250,6 @@ def display():
 
     glDisable(GL_DEPTH_TEST); glDisable(GL_LIGHTING)
     
-    # *** UPDATED: New UI logic for different game states ***
     if game_won:
         draw_text(None, WINDOW_H / 2, "YOU WIN! QUEST COMPLETE!", GLUT_BITMAP_TIMES_ROMAN_24)
         draw_text(None, WINDOW_H / 2 - 30, "Press 'R' to play again.", GLUT_BITMAP_HELVETICA_18)
@@ -298,7 +288,7 @@ def keyboard(key, x, y):
     elif key == ' ' and not constellation_active: start_constellation_game()
 
 def special_keys(key, x, y):
-    if game_won or game_over: return # Disable controls on win/loss
+    if game_won or game_over: return
     speed = 0.5; angle_rad = math.radians(isometric_angle)
     dx, dz = 0, 0
     if key == GLUT_KEY_UP: dx, dz = speed * math.cos(angle_rad), speed * math.sin(angle_rad)
