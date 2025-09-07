@@ -9,14 +9,8 @@ import sys
 import subprocess
 import random
 
-# ---------------------------
-# Window config
-# ---------------------------
-WINDOW_W, WINDOW_H = 1000, 800
 
-# ---------------------------
-# Environment config
-# ---------------------------
+WINDOW_W, WINDOW_H = 1000, 800
 ENV_SIZE = 30.0
 TREE_COUNT = 20
 
@@ -33,9 +27,7 @@ riddle_timer = 0
 riddle_time_limit = 30  # 30 seconds to solve each riddle
 timer_start_time = 0
 
-# ---------------------------
-# River & watering system
-# ---------------------------
+# River dimensions
 RIVER_X_START = -ENV_SIZE/2
 RIVER_X_END = -ENV_SIZE/2 + 3  # Width of river
 RIVER_Z_START = -ENV_SIZE/2
@@ -461,14 +453,6 @@ def draw_fruits():
         glutSolidSphere(0.3, 16, 16)
         glPopMatrix()
 
-# Draw the mountain
-#def draw_mountain():
-   # glColor3f(0.5, 0.35, 0.25)  # Brown mountain
-    #glPushMatrix()
-    #glTranslatef(MOUNTAIN_POS[0], MOUNTAIN_POS[1], MOUNTAIN_POS[2])
-    #glRotatef(-90, 1, 0, 0)
-    #glutSolidCone(MOUNTAIN_RADIUS, MOUNTAIN_HEIGHT, 20, 20)
-    #glPopMatrix()
 
 # Draw falling rocks
 def draw_rocks():
@@ -540,26 +524,6 @@ def draw_minimap():
     glVertex2f(20, 150)
     glEnd()
 
-    # Mountain
-    # glColor3f(0.5, 0.35, 0.25)
-    # map_x = 20 + (MOUNTAIN_POS[0] + ENV_SIZE/2) * 130/ENV_SIZE
-    # map_y = 20 + (MOUNTAIN_POS[2] + ENV_SIZE/2) * 130/ENV_SIZE  # no flip
-    # glBegin(GL_QUADS)
-    # glVertex2f(map_x-8, map_y-8)
-    # glVertex2f(map_x+8, map_y-8)
-    # glVertex2f(map_x+8, map_y+8)
-    # glVertex2f(map_x-8, map_y+8)
-    # glEnd()
-
-    # Dragon
-    # glColor3f(0.7, 0.1, 0.1)
-    # glBegin(GL_QUADS)
-    # glVertex2f(map_x-3, map_y-3)
-    # glVertex2f(map_x+3, map_y-3)
-    # glVertex2f(map_x+3, map_y+3)
-    # glVertex2f(map_x-3, map_y+3)
-    # glEnd()
-
     # Trees
     glColor3f(0.4, 0.2, 0.1)
     for x, z in trees:
@@ -592,10 +556,11 @@ def init_riddles(tree_x, tree_z):
     global current_riddle, current_answer, scrambled_tiles, riddle_attempts, riddle_score, riddle_tiles, golden_apple
     
     riddles = [
-        {"question": "I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?", "answer": "ECHO"},
-        {"question": "The more you take, the more you leave behind. What am I?", "answer": "FOOTSTEPS"},
-        {"question": "What has keys but can't open locks?", "answer": "PIANO"}
-    ]
+    {"question": "I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?", "answer": "ECHO"},
+    {"question": "The more you take, the more you leave behind. What am I?", "answer": "FOOTSTEPS"},
+    {"question": "What has keys but can’t open locks?", "answer": "PIANO"},
+    {"question": "I’m tall when I’m young and short when I’m old. What am I?", "answer": "CANDLE"},
+    {"question": "What can travel around the world while staying in a corner?", "answer": "STAMP"}]   
     
     riddle = random.choice(riddles)
     current_riddle = riddle["question"]
@@ -707,9 +672,6 @@ def update_riddle_timer():
     return False
 
 def set_isometric_camera():
-    """
-    Sets the camera in isometric view, but centered on the player.
-    """
     angle_rad = math.radians(isometric_angle)
     elevation_rad = math.radians(isometric_elevation)
     
@@ -984,7 +946,6 @@ def display():
     glLoadIdentity()
 
     glClearColor(0.5, 0.7, 0.9, 1.0)
-    glEnable(GL_DEPTH_TEST)
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
@@ -1015,7 +976,6 @@ def display():
     draw_dragon()
 
     # HUD
-    glDisable(GL_DEPTH_TEST)
     draw_minimap()
     draw_gauge()
 
@@ -1041,7 +1001,6 @@ def display():
         else:
             draw_text(10, 650, "Dragon needs golden apples to heal!")
     
-    glEnable(GL_DEPTH_TEST)
     
     # Update and check timer
     time_up = update_riddle_timer()
@@ -1054,15 +1013,13 @@ def display():
         draw_riddle_tiles()
         
         # Draw riddle UI with properly spaced lines
-        glDisable(GL_DEPTH_TEST)
         draw_text(300, 430, f"RIDDLE: {current_riddle}")
         draw_text(300, 400, f"Your answer: {''.join(selected_tiles)}")
         draw_text(300, 370, f"Attempts: {riddle_attempts}/3")
         draw_text(300, 340, f"Time: {int(riddle_timer)} seconds")
         draw_text(300, 310, "Right-click or press E on tiles")
         draw_text(300, 280, "Tiles change when selected!")
-        glEnable(GL_DEPTH_TEST)
-    
+
     glutSwapBuffers()
     
 def mouse(button, state, x, y):
