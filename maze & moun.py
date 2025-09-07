@@ -37,7 +37,7 @@ last_update_time_1 = time.time()
 # ---------------------------
 # Level 2 (3D Maze)
 # ---------------------------
-player_2 = {"x": 0.0, "z": 0.0}
+player_2 = {"x": 0.0, "y": 0.5, "z": 0.0}
 score_2 = 0
 b_key_pressed = False
 countdown_timer_2 = 60.0
@@ -71,7 +71,7 @@ MAX_BOMBS = 3
 # ---------------------------
 # Level 3 (Dragon Slayer)
 # ---------------------------
-player_3 = {"x": 0.0, "z": 0.0}
+player_3 = {"x": 0.0, "y": 0.5, "z": 0.0}
 score_3 = 0
 fireball_hits = 0
 MAX_FIREBALL_HITS = 10
@@ -113,6 +113,71 @@ def draw_text(text, x, y):
     glMatrixMode(GL_MODELVIEW)
 
 # ---------------------------
+# Player Drawing (Unified)
+# ---------------------------
+def draw_player(player_pos):
+    """
+    Draws the player character using GLUT primitives based on a position dictionary.
+    """
+    glPushMatrix()
+    glTranslatef(player_pos["x"], player_pos["y"], player_pos["z"])  # player position
+
+    # ---------------- Body ----------------
+    glColor3f(0.2, 0.6, 0.8)  # blue shirt
+    glPushMatrix()
+    glScalef(0.5, 1.0, 0.3)
+    glutSolidCube(1.0)
+    glPopMatrix()
+
+    # ---------------- Head ----------------
+    glColor3f(1.0, 0.8, 0.6)  # skin tone
+    glPushMatrix()
+    glTranslatef(0, 0.75, 0)
+    glutSolidSphere(0.25, 20, 20)
+    glPopMatrix()
+
+    # ---------------- Eyes ----------------
+    glColor3f(0, 0, 0)
+    glPushMatrix()
+    glTranslatef(-0.1, 0.85, 0.12)
+    glutSolidSphere(0.05, 10, 10)
+    glTranslatef(0.2, 0, 0)
+    glutSolidSphere(0.05, 10, 10)
+    glPopMatrix()
+
+    # ---------------- Legs ----------------
+    glColor3f(0.2, 0.2, 0.6)  # dark blue pants
+    for offset in [-0.15, 0.15]:
+        glPushMatrix()
+        glTranslatef(offset, -0.75, 0)
+        glScalef(0.1, 0.5, 0.1)
+        glutSolidCube(1.0)
+        glPopMatrix()
+
+    # ---------------- Hands ----------------
+    glColor3f(1.0, 0.8, 0.6)  # skin tone
+    quad = gluNewQuadric()
+    for offset, rot in [(-0.3, 90), (0.3, -90)]:
+        glPushMatrix()
+        glTranslatef(offset, 0.25, 0)
+        glRotatef(rot, 0, 1, 0)
+        glRotatef(-20, 1, 0, 0)
+        gluCylinder(quad, 0.08, 0.08, 0.4, 12, 1)
+        glPopMatrix()
+    gluDeleteQuadric(quad) # Clean up quadric object
+
+    # ---------------- Cape ----------------
+    glColor3f(0.8, 0.1, 0.1)  # red cape
+    glPushMatrix()
+    glTranslatef(0, 0, -0.2)
+    glRotatef(10, 1, 0, 0)
+    glScalef(0.6, 1.0, 0.05)
+    glutSolidCube(1.0)
+    glPopMatrix()
+
+    glPopMatrix()
+
+# ---------------------------
 # Level 1 Drawing & Logic
 # ---------------------------
 def draw_ground_1():
@@ -144,13 +209,8 @@ def draw_ground_1():
     glLineWidth(1.0)
 
 def draw_player_1():
-    """Draws the player as a colored cube."""
-    glColor3f(1.0, 0.0, 0.0)
-    glPushMatrix()
-    glTranslatef(player_1["x"], 0.5, player_1["z"])
-    glScalef(0.5, 1.0, 0.5)
-    glutSolidCube(1.0)
-    glPopMatrix()
+    """Draws the player for Level 1."""
+    draw_player(player_1)
 
 def draw_stones():
     """Draws the rolling stones as solid spheres with different colors."""
@@ -303,11 +363,7 @@ def draw_items():
         glPopMatrix()
 
 def draw_player_2():
-    glColor3f(0.0, 0.0, 1.0)
-    glPushMatrix()
-    glTranslatef(player_2["x"], 0.5, player_2["z"])
-    glutSolidSphere(0.3, 16, 16)
-    glPopMatrix()
+    draw_player(player_2)
 
 def set_isometric_camera_2():
     angle_rad = math.radians(isometric_angle_2)
@@ -547,13 +603,8 @@ def draw_player_projectile(x, z):
     glPopMatrix()
 
 def draw_player_3():
-    """Draws player as a colored cube."""
-    glColor3f(1.0, 0.0, 0.0)
-    glPushMatrix()
-    glTranslatef(player_3["x"], 0.5, player_3["z"])
-    glScalef(0.5, 1.0, 0.5)
-    glutSolidCube(1.0)
-    glPopMatrix()
+    """Draws player for Level 3."""
+    draw_player(player_3)
 
 def draw_entities():
     """Draws all dragons, fireballs, and player projectiles."""
@@ -672,9 +723,10 @@ def update_game_state_3():
             if check_collision_general(d, pp, 1.0, 0.3):
                 score_3 += 1
                 hit = True
-                projectiles_to_remove.add(i)
                 dragons.remove(d)
                 break
+        if not hit:
+            projectiles_to_remove.add(i)
 
     player_projectiles = [pp for i, pp in enumerate(player_projectiles) if i not in projectiles_to_remove]
     glutPostRedisplay()
@@ -774,9 +826,9 @@ def display():
             if current_level == LEVEL_3:
                 message = "You Win! Final Score: " + str(score_3)
             elif current_level == LEVEL_2:
-                 message = "You Win! Final Score: " + str(score_2)
+                message = "You Win! Final Score: " + str(score_2)
             else:
-                 message = "You Win! Level 1 Complete!"
+                message = "You Win! Level 1 Complete!"
 
         glWindowPos2f(WINDOW_W/2 - len(message)*4, WINDOW_H/2)
         for c in message:
