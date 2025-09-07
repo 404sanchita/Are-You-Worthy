@@ -797,18 +797,21 @@ def special_keys(key,x,y):
     global is_climbing
     angle_rad=math.radians(isometric_angle)
     dx=dz=0
+    # The direction of movement is now corrected to feel natural with the camera angle.
+    # Forward/backward movement is now relative to the isometric angle.
     if key==GLUT_KEY_UP:
-        dx=0.5*math.sin(angle_rad)
-        dz=0.5*math.cos(angle_rad)
+        dx = m_speed * math.cos(angle_rad)
+        dz = -m_speed * math.sin(angle_rad)
     elif key==GLUT_KEY_DOWN:
-        dx=-0.5*math.sin(angle_rad)
-        dz=-0.5*math.cos(angle_rad)
+        dx = -m_speed * math.cos(angle_rad)
+        dz = m_speed * math.sin(angle_rad)
+    # Left/right strafing is perpendicular to the forward/backward direction.
     elif key==GLUT_KEY_LEFT:
-        dx=-0.5*math.cos(angle_rad)
-        dz=0.5*math.sin(angle_rad)
+        dx = -m_speed * math.sin(angle_rad)
+        dz = -m_speed * math.cos(angle_rad)
     elif key==GLUT_KEY_RIGHT:
-        dx=0.5*math.cos(angle_rad)
-        dz=-0.5*math.sin(angle_rad)
+        dx = m_speed * math.sin(angle_rad)
+        dz = m_speed * math.cos(angle_rad)
     
     new_x = player["x"] + dx
     new_z = player["z"] + dz
