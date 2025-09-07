@@ -27,9 +27,10 @@ constellation_active = False
 stars = []
 current_constellation = []
 connected_stars = []
+# *** REPLACED "bear" with "house" for an easier shape ***
 constellation_shapes = {
     "dragon": [(0, 0), (2, 1), (4, 0), (3, -2), (1, -3), (-1, -2), (-2, 0), (0, 2)],
-    "bear": [(-2, 0), (0, 2), (2, 1), (3, -1), (1, -2), (-1, -1), (-3, -2), (-2, 0)],
+    "house": [(0, 0), (4, 0), (4, 4), (0, 4), (0, 0), (2, 6), (4, 4)], # A simple house shape
     "swan": [(-3, 0), (-1, 2), (1, 1), (3, 0), (2, -2), (0, -3), (-2, -2), (-3, 0)]
 }
 current_shape = ""
@@ -37,33 +38,32 @@ game_score = 0
 constellation_timer = 0
 MAX_CONSTELLATION_TIME = 60  # seconds
 
+# *** NEW: Game state variables for lives and win/loss conditions ***
+player_lives = 3
+game_won = False
+game_over = False
+
 # ---------------------------
 # Drawing
 # ---------------------------
 
 def draw_ground():
-    # Draw a grid for the ground
-    glColor3f(0.1, 0.6, 0.1)  # green ground
+    glColor3f(0.1, 0.6, 0.1)
     glBegin(GL_QUADS)
     glVertex3f(-ENV_SIZE, 0, -ENV_SIZE)
     glVertex3f(ENV_SIZE, 0, -ENV_SIZE)
     glVertex3f(ENV_SIZE, 0, ENV_SIZE)
     glVertex3f(-ENV_SIZE, 0, ENV_SIZE)
     glEnd()
-    
-    # Draw grid lines
     glColor3f(0.2, 0.5, 0.2)
     glBegin(GL_LINES)
-    for i in range(-int(ENV_SIZE/2), int(ENV_SIZE/2) + 1, 2):
-        glVertex3f(i, 0.01, -ENV_SIZE)
-        glVertex3f(i, 0.01, ENV_SIZE)
-        glVertex3f(-ENV_SIZE, 0.01, i)
-        glVertex3f(ENV_SIZE, 0.01, i)
+    for i in range(-int(ENV_SIZE), int(ENV_SIZE) + 1, 2):
+        glVertex3f(i, 0.01, -ENV_SIZE); glVertex3f(i, 0.01, ENV_SIZE)
+        glVertex3f(-ENV_SIZE, 0.01, i); glVertex3f(ENV_SIZE, 0.01, i)
     glEnd()
 
 def draw_player():
-    # Draw player as a colored cube
-    glColor3f(1.0, 0.0, 0.0)  # red player
+    glColor3f(1.0, 0.0, 0.0)
     glPushMatrix()
     glTranslatef(player["x"], 0.5, player["z"])
     glScalef(0.5, 1.0, 0.5)
@@ -71,39 +71,27 @@ def draw_player():
     glPopMatrix()
 
 def draw_stars():
-    if not constellation_active:
-        return
-        
-    # Draw stars in the sky (positioned high above the ground)
+    if not constellation_active: return
     for i, star in enumerate(stars):
         glPushMatrix()
-        glTranslatef(star["x"], 15.0, star["z"])  # Stars are high up
-        
-        # Make star glow
+        glTranslatef(star["x"], 15.0, star["z"])
         glDisable(GL_LIGHTING)
-        if i in connected_stars:
-            glColor3f(0.0, 1.0, 0.0)  # Connected stars are green
-        else:
-            glColor3f(1.0, 1.0, 0.8)  # Yellow-white for unconnected stars
-            
+        if i in connected_stars: glColor3f(0.0, 1.0, 0.0)
+        else: glColor3f(1.0, 1.0, 0.8)
         glutSolidSphere(0.3, 10, 10)
-        
-        # Add a glow effect
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+        glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE)
         glColor4f(1.0, 1.0, 0.5, 0.3)
         glutSolidSphere(0.5, 8, 8)
-        glDisable(GL_BLEND)
-        glEnable(GL_LIGHTING)
-        
+        glDisable(GL_BLEND); glEnable(GL_LIGHTING)
         glPopMatrix()
     
-    # Draw connections between stars
     if len(connected_stars) > 1:
         glDisable(GL_LIGHTING)
-        glColor3f(0.0, 0.8, 1.0)  # Cyan connection lines
+        glColor3f(0.0, 0.8, 1.0)
         glLineWidth(2.0)
-        glBegin(GL_LINE_STRIP)
+        is_loop = current_constellation and current_constellation[0] == current_constellation[-1]
+        draw_mode = GL_LINE_LOOP if is_loop else GL_LINE_STRIP
+        glBegin(draw_mode)
         for star_idx in connected_stars:
             star = stars[star_idx]
             glVertex3f(star["x"], 15.0, star["z"])
@@ -111,256 +99,184 @@ def draw_stars():
         glLineWidth(1.0)
         glEnable(GL_LIGHTING)
 
+# (Other drawing functions like draw_sky, draw_minimap, etc. remain the same)
 def draw_sky():
-    # Draw night sky background
     glDisable(GL_LIGHTING)
+    glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity()
+    glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity()
     glBegin(GL_QUADS)
-    glColor3f(0.05, 0.05, 0.2)  # Dark blue at horizon
-    glVertex3f(-ENV_SIZE, 0, -ENV_SIZE)
-    glVertex3f(ENV_SIZE, 0, -ENV_SIZE)
-    glColor3f(0.02, 0.02, 0.1)  # Darker blue at top
-    glVertex3f(ENV_SIZE, 30, -ENV_SIZE)
-    glVertex3f(-ENV_SIZE, 30, -ENV_SIZE)
-    
-    glColor3f(0.05, 0.05, 0.2)
-    glVertex3f(-ENV_SIZE, 0, ENV_SIZE)
-    glVertex3f(ENV_SIZE, 0, ENV_SIZE)
-    glColor3f(0.02, 0.02, 0.1)
-    glVertex3f(ENV_SIZE, 30, ENV_SIZE)
-    glVertex3f(-ENV_SIZE, 30, ENV_SIZE)
-    
-    glColor3f(0.05, 0.05, 0.2)
-    glVertex3f(-ENV_SIZE, 0, -ENV_SIZE)
-    glVertex3f(-ENV_SIZE, 0, ENV_SIZE)
-    glColor3f(0.02, 0.02, 0.1)
-    glVertex3f(-ENV_SIZE, 30, ENV_SIZE)
-    glVertex3f(-ENV_SIZE, 30, -ENV_SIZE)
-    
-    glColor3f(0.05, 0.05, 0.2)
-    glVertex3f(ENV_SIZE, 0, -ENV_SIZE)
-    glVertex3f(ENV_SIZE, 0, ENV_SIZE)
-    glColor3f(0.02, 0.02, 0.1)
-    glVertex3f(ENV_SIZE, 30, ENV_SIZE)
-    glVertex3f(ENV_SIZE, 30, -ENV_SIZE)
+    glColor3f(0.02, 0.02, 0.1); glVertex3f(-1, 1, -1); glVertex3f(1, 1, -1)
+    glColor3f(0.05, 0.05, 0.2); glVertex3f(1, -1, -1); glVertex3f(-1, -1, -1)
     glEnd()
+    glPopMatrix(); glMatrixMode(GL_PROJECTION); glPopMatrix(); glMatrixMode(GL_MODELVIEW)
     glEnable(GL_LIGHTING)
 
-# ---------------------------
-# Mini-map (top-left)
-# ---------------------------
+def draw_constellation_preview():
+    if not constellation_active or not current_constellation: return
+    glColor4f(0.1, 0.1, 0.1, 0.7)
+    glBegin(GL_QUADS); glVertex2f(10, WINDOW_H - 140); glVertex2f(140, WINDOW_H - 140); glVertex2f(140, WINDOW_H - 270); glVertex2f(10, WINDOW_H - 270); glEnd()
+    glColor3f(1.0, 1.0, 1.0)
+    glRasterPos2f(20, WINDOW_H - 155)
+    for char in "TARGET SHAPE:": glutBitmapCharacter(GLUT_BITMAP_9_BY_15, ord(char))
+    points = current_constellation
+    min_x = min(p[0] for p in points); max_x = max(p[0] for p in points)
+    min_z = min(p[1] for p in points); max_z = max(p[1] for p in points)
+    span_x = max_x - min_x if max_x > min_x else 1.0
+    span_z = max_z - min_z if max_z > min_z else 1.0
+    box_x, box_y = 15, WINDOW_H - 265; box_w, box_h = 120, 110; padding = 15
+    def map_coords(p):
+        norm_x = (p[0] - min_x) / span_x; norm_z = (p[1] - min_z) / span_z
+        screen_x = box_x + padding + norm_x * (box_w - 2 * padding)
+        screen_y = box_y + padding + norm_z * (box_h - 2 * padding)
+        return screen_x, screen_y
+    mapped_points = [map_coords(p) for p in points]
+    glColor3f(0.0, 0.8, 1.0); glLineWidth(2.0)
+    is_loop = points and points[0] == points[-1]
+    draw_mode = GL_LINE_LOOP if is_loop else GL_LINE_STRIP
+    glBegin(draw_mode)
+    for sx, sy in mapped_points: glVertex2f(sx, sy)
+    glEnd()
+    glLineWidth(1.0)
+    glEnable(GL_POINT_SMOOTH); glPointSize(5.0); glColor3f(1.0, 1.0, 0.8)
+    glBegin(GL_POINTS)
+    for sx, sy in mapped_points: glVertex2f(sx, sy)
+    glEnd()
+    glPointSize(1.0); glDisable(GL_POINT_SMOOTH)
 
 def draw_minimap():
-    glMatrixMode(GL_PROJECTION)
-    glPushMatrix()
-    glLoadIdentity()
-    gluOrtho2D(0, WINDOW_W, 0, WINDOW_H)
-    glMatrixMode(GL_MODELVIEW)
-    glPushMatrix()
-    glLoadIdentity()
-
-    # Draw minimap background
-    glColor4f(0.1, 0.1, 0.1, 0.7)  # dark semi-transparent
-    glBegin(GL_QUADS)
-    glVertex2f(10, WINDOW_H - 10)
-    glVertex2f(160, WINDOW_H - 10)
-    glVertex2f(160, WINDOW_H - 160)
-    glVertex2f(10, WINDOW_H - 160)
-    glEnd()
-
-    # Draw ground area
-    glColor3f(0.1, 0.6, 0.1)  # green
-    glBegin(GL_QUADS)
-    glVertex2f(20, WINDOW_H - 20)
-    glVertex2f(150, WINDOW_H - 20)
-    glVertex2f(150, WINDOW_H - 150)
-    glVertex2f(20, WINDOW_H - 150)
-    glEnd()
-
-    # Draw player as red dot
-    map_x = 20 + (player["x"] + ENV_SIZE/2) * 130 / ENV_SIZE
-    map_y = WINDOW_H - 20 - (player["z"] + ENV_SIZE/2) * 130 / ENV_SIZE
-    glColor3f(1, 0, 0)
-    glBegin(GL_QUADS)
-    glVertex2f(map_x-3, map_y-3)
-    glVertex2f(map_x+3, map_y-3)
-    glVertex2f(map_x+3, map_y+3)
-    glVertex2f(map_x-3, map_y+3)
-    glEnd()
-
-    glPopMatrix()
-    glMatrixMode(GL_PROJECTION)
-    glPopMatrix()
-    glMatrixMode(GL_MODELVIEW)
+    glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity(); gluOrtho2D(0, WINDOW_W, 0, WINDOW_H)
+    glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity()
+    glColor4f(0.1, 0.1, 0.1, 0.7)
+    glBegin(GL_QUADS); glVertex2f(10, WINDOW_H - 10); glVertex2f(140, WINDOW_H - 10); glVertex2f(140, WINDOW_H - 130); glVertex2f(10, WINDOW_H - 130); glEnd()
+    map_size = 110; map_ox, map_oy = 15, WINDOW_H - 125
+    glColor3f(0.1, 0.6, 0.1)
+    glBegin(GL_QUADS); glVertex2f(map_ox, map_oy + map_size); glVertex2f(map_ox + map_size, map_oy + map_size); glVertex2f(map_ox + map_size, map_oy); glVertex2f(map_ox, map_oy); glEnd()
+    map_x = map_ox + (player["x"] + ENV_SIZE) * map_size / (ENV_SIZE * 2)
+    map_y = map_oy + (player["z"] + ENV_SIZE) * map_size / (ENV_SIZE * 2)
+    glColor3f(1, 0, 0); glPointSize(6.0); glEnable(GL_POINT_SMOOTH)
+    glBegin(GL_POINTS); glVertex2f(map_x, map_y); glEnd()
+    glDisable(GL_POINT_SMOOTH); glPointSize(1.0)
+    draw_constellation_preview()
+    glPopMatrix(); glMatrixMode(GL_PROJECTION); glPopMatrix(); glMatrixMode(GL_MODELVIEW)
 
 # ---------------------------
-# Isometric Camera
+# Game State and Logic
 # ---------------------------
+
+def reset_game():
+    """Resets the entire game state to the beginning."""
+    global player_lives, game_score, game_won, game_over, constellation_active
+    player["x"], player["z"] = 0.0, 0.0
+    player_lives = 3
+    game_score = 0
+    game_won = False
+    game_over = False
+    constellation_active = False
+    print("\n--- Game Reset! ---")
 
 def set_isometric_camera():
-    # Calculate camera position for isometric view
-    angle_rad = math.radians(isometric_angle)
-    elevation_rad = math.radians(isometric_elevation)
-    
-    cam_x = camera_distance * math.cos(angle_rad) * math.cos(elevation_rad)
+    angle_rad, elevation_rad = math.radians(isometric_angle), math.radians(isometric_elevation)
+    cam_x = player["x"] + camera_distance * math.cos(angle_rad) * math.cos(elevation_rad)
     cam_y = camera_distance * math.sin(elevation_rad)
-    cam_z = camera_distance * math.sin(angle_rad) * math.cos(elevation_rad)
-    
-    # Look at the center of the scene
-    gluLookAt(cam_x, cam_y, cam_z,   # camera position
-              0, 0, 0,               # look at center
-              0, 1, 0)               # up vector
-
-# ---------------------------
-# Constellation Game Functions
-# ---------------------------
+    cam_z = player["z"] + camera_distance * math.sin(angle_rad) * math.cos(elevation_rad)
+    gluLookAt(cam_x, cam_y, cam_z, player["x"], 0, player["z"], 0, 1, 0)
 
 def start_constellation_game():
     global constellation_active, stars, current_constellation, connected_stars, current_shape, constellation_timer
-    
+    if game_won or game_over: return
     constellation_active = True
-    stars = []
-    connected_stars = []
+    stars, connected_stars = [], []
     current_shape = random.choice(list(constellation_shapes.keys()))
     current_constellation = constellation_shapes[current_shape]
-    
-    # Position stars based on the constellation pattern
+    scale_factor = 3.5
     for i, (dx, dz) in enumerate(current_constellation):
-        stars.append({
-            "x": dx * 2,  # Scale the pattern
-            "z": dz * 2,
-            "index": i
-        })
-    
+        stars.append({"x": dx * scale_factor, "z": dz * scale_factor, "index": i})
     constellation_timer = MAX_CONSTELLATION_TIME
-    print(f"Constellation Game Started! Find the {current_shape.upper()} shape!")
-    print("Click on stars in the correct order to form the constellation.")
+    print(f"A new challenge appears! Find the {current_shape.upper()} shape!")
 
 def check_constellation_completion():
-    global constellation_active, game_score
+    """UPDATED: Handles win, loss of life, and game over conditions."""
+    global constellation_active, game_score, player_lives, game_won, game_over, connected_stars
     
     if len(connected_stars) == len(stars):
-        # Check if the order is correct
-        correct = True
-        for i, star_idx in enumerate(connected_stars):
-            if star_idx != i:
-                correct = False
-                break
-                
-        if correct:
-            points = int(constellation_timer * 10)  # More points for faster completion
+        # Correct Order - WIN!
+        if connected_stars == list(range(len(stars))):
+            points = int(constellation_timer * 10)
             game_score += points
-            print(f"Perfect! You formed the {current_shape} constellation! +{points} points")
+            print(f"PERFECT! Quest Complete! +{points} points")
+            game_won = True
+            constellation_active = False
+        # Incorrect Order - LOSE A LIFE
         else:
-            print("Almost! The constellation is formed but in the wrong order.")
-            
-        constellation_active = False
-        return True
-    return False
+            player_lives -= 1
+            print(f"Wrong order! You lost a life. {player_lives} lives remaining.")
+            if player_lives <= 0:
+                print("You are out of lives! Game Over.")
+                game_over = True
+                constellation_active = False
+            else:
+                # Reset for another try on the same constellation
+                connected_stars = []
+                print("Try connecting the stars again.")
 
 def find_nearest_star(x, z):
-    nearest_star = None
-    min_distance = float('inf')
-    
+    nearest_star_idx, min_distance = None, float('inf')
     for i, star in enumerate(stars):
-        if i in connected_stars:
-            continue  # Skip already connected stars
-            
+        if star["index"] in connected_stars: continue
         distance = math.sqrt((star["x"] - x)**2 + (star["z"] - z)**2)
-        if distance < min_distance and distance < 3.0:  # Only select if close enough
-            min_distance = distance
-            nearest_star = i
-            
-    return nearest_star
-
+        if distance < min_distance and distance < 2.0:
+            min_distance, nearest_star_idx = distance, star["index"]
+    return nearest_star_idx
 # ---------------------------
 # Scene Rendering
 # ---------------------------
 
-def check_collision(x, z):
-    # Check if player is out of bounds
-    if abs(x) > ENV_SIZE/2 - 1 or abs(z) > ENV_SIZE/2 - 1:
-        return True
-    return False
-
-def draw_text(x, y, text):
-    glMatrixMode(GL_PROJECTION)
-    glPushMatrix()
-    glLoadIdentity()
-    gluOrtho2D(0, WINDOW_W, 0, WINDOW_H)
-    glMatrixMode(GL_MODELVIEW)
-    glPushMatrix()
-    glLoadIdentity()
-    
+def draw_text(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
+    glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity(); gluOrtho2D(0, WINDOW_W, 0, WINDOW_H)
+    glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity()
     glColor3f(1, 1, 1)
+    # Center text if x is None
+    if x is None:
+        text_width = sum(glutBitmapWidth(font, ord(c)) for c in text)
+        x = (WINDOW_W - text_width) / 2
     glRasterPos2f(x, y)
-    for char in text:
-        glutBitmapCharacter(GLUT_BITMAP_9_BY_15, ord(char))
-        
-    glPopMatrix()
-    glMatrixMode(GL_PROJECTION)
-    glPopMatrix()
-    glMatrixMode(GL_MODELVIEW)
+    for char in text: glutBitmapCharacter(font, ord(char))
+    glPopMatrix(); glMatrixMode(GL_PROJECTION); glPopMatrix(); glMatrixMode(GL_MODELVIEW)
 
 def display():
+    glClearColor(0.05, 0.05, 0.15, 1.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    gluPerspective(60, WINDOW_W/float(WINDOW_H), 0.1, 200.0)
-
-    glMatrixMode(GL_MODELVIEW)
-    glLoadIdentity()
+    
+    glMatrixMode(GL_PROJECTION); glLoadIdentity(); gluPerspective(60, WINDOW_W/float(WINDOW_H), 0.1, 200.0)
+    glMatrixMode(GL_MODELVIEW); glLoadIdentity()
     set_isometric_camera()
 
-    glClearColor(0.05, 0.05, 0.15, 1.0)  # Dark blue for night sky
+    glEnable(GL_DEPTH_TEST); glEnable(GL_LIGHTING); glEnable(GL_LIGHT0); glEnable(GL_COLOR_MATERIAL)
+    light_position = [10.0, 15.0, 10.0, 1.0]; light_ambient = [0.2, 0.2, 0.3, 1.0]; light_diffuse = [0.6, 0.6, 0.8, 1.0]
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position); glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient); glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse)
 
-    # Enable depth testing for proper 3D rendering
-    glEnable(GL_DEPTH_TEST)
-    
-    # Enable lighting for better visibility
-    glEnable(GL_LIGHTING)
-    glEnable(GL_LIGHT0)
-    glEnable(GL_COLOR_MATERIAL)
-    
-    # Set up light (moonlight)
-    light_position = [10.0, 15.0, 10.0, 1.0]
-    light_ambient = [0.1, 0.1, 0.2, 1.0]
-    light_diffuse = [0.4, 0.4, 0.6, 1.0]
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position)
-    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient)
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse)
+    draw_ground(); draw_player(); draw_stars()
 
-    draw_sky()
-    draw_ground()
-    draw_player()
-    draw_stars()
-
-    # Draw boundary
-    glColor3f(0.5, 0.5, 0.7)
-    glBegin(GL_LINE_LOOP)
-    glVertex3f(-ENV_SIZE/2, 0.1, -ENV_SIZE/2)
-    glVertex3f(ENV_SIZE/2, 0.1, -ENV_SIZE/2)
-    glVertex3f(ENV_SIZE/2, 0.1, ENV_SIZE/2)
-    glVertex3f(-ENV_SIZE/2, 0.1, ENV_SIZE/2)
-    glEnd()
-
-    # Mini-map overlay
-    glDisable(GL_DEPTH_TEST)
-    glDisable(GL_LIGHTING)
-    draw_minimap()
+    glDisable(GL_DEPTH_TEST); glDisable(GL_LIGHTING)
     
-    # Draw UI elements
-    draw_text(10, 30, f"Score: {game_score}")
-    
-    if constellation_active:
-        draw_text(10, 50, f"Find the: {current_shape.upper()}")
-        draw_text(10, 70, f"Time: {int(constellation_timer)}s")
-        draw_text(10, 90, "Click on stars in order to form the constellation")
+    # *** UPDATED: New UI logic for different game states ***
+    if game_won:
+        draw_text(None, WINDOW_H / 2, "YOU WIN! QUEST COMPLETE!", GLUT_BITMAP_TIMES_ROMAN_24)
+        draw_text(None, WINDOW_H / 2 - 30, "Press 'R' to play again.", GLUT_BITMAP_HELVETICA_18)
+    elif game_over:
+        draw_text(None, WINDOW_H / 2, "GAME OVER", GLUT_BITMAP_TIMES_ROMAN_24)
+        draw_text(None, WINDOW_H / 2 - 30, "Press 'R' to try again.", GLUT_BITMAP_HELVETICA_18)
     else:
-        draw_text(10, 50, "Press SPACE to start constellation game")
-        
+        draw_minimap()
+        draw_text(150, WINDOW_H - 30, f"Score: {game_score}")
+        draw_text(150, WINDOW_H - 60, f"Lives: {player_lives}")
+        if constellation_active:
+            draw_text(150, WINDOW_H - 90, f"Find: {current_shape.upper()}")
+            draw_text(150, WINDOW_H - 120, f"Time: {int(constellation_timer)}s")
+        else:
+            draw_text(10, WINDOW_H - 300, "Press SPACE to start the quest")
+            
     glEnable(GL_DEPTH_TEST)
-    glEnable(GL_LIGHTING)
-
     glutSwapBuffers()
 
 # ---------------------------
@@ -368,103 +284,63 @@ def display():
 # ---------------------------
 
 def keyboard(key, x, y):
-    global isometric_angle, camera_distance, constellation_active
-    
+    global isometric_angle, camera_distance
     key = key.decode('utf-8')
-    if key == '\x1b':  # Esc
-        glutLeaveMainLoop()
-    elif key == 'r':  # Reset position
-        player["x"] = 0.0
-        player["z"] = 0.0
-    elif key == 'i':  # Zoom in
-        camera_distance = max(5.0, camera_distance - 2.0)
-    elif key == 'k':  # Zoom out
-        camera_distance = min(40.0, camera_distance + 2.0)
-    elif key == 'j':  # Rotate left
-        isometric_angle = (isometric_angle - 5) % 360
-    elif key == 'l':  # Rotate right
-        isometric_angle = (isometric_angle + 5) % 360
-    elif key == ' ' and not constellation_active:  # Space to start game
-        start_constellation_game()
+    if key == '\x1b': glutLeaveMainLoop()
+    elif key == 'r': reset_game()
+    
+    if game_won or game_over: return # Disable controls on win/loss
+
+    if key == 'i': camera_distance = max(5.0, camera_distance - 2.0)
+    elif key == 'k': camera_distance = min(50.0, camera_distance + 2.0)
+    elif key == 'j': isometric_angle = (isometric_angle - 5) % 360
+    elif key == 'l': isometric_angle = (isometric_angle + 5) % 360
+    elif key == ' ' and not constellation_active: start_constellation_game()
 
 def special_keys(key, x, y):
-    # Movement relative to isometric view
-    angle_rad = math.radians(isometric_angle)
-    
-    if key == GLUT_KEY_UP:
-        # Move along the view direction (XZ plane)
-        player["x"] += 0.5 * math.sin(angle_rad)
-        player["z"] += 0.5 * math.cos(angle_rad)
-    elif key == GLUT_KEY_DOWN:
-        player["x"] -= 0.5 * math.sin(angle_rad)
-        player["z"] -= 0.5 * math.cos(angle_rad)
-    elif key == GLUT_KEY_LEFT:
-        # Move perpendicular to view direction
-        player["x"] -= 0.5 * math.cos(angle_rad)
-        player["z"] += 0.5 * math.sin(angle_rad)
-    elif key == GLUT_KEY_RIGHT:
-        player["x"] += 0.5 * math.cos(angle_rad)
-        player["z"] -= 0.5 * math.sin(angle_rad)
-    
-    # Check collision after moving
-    if check_collision(player["x"], player["z"]):
-        # Undo movement if collision detected
-        if key == GLUT_KEY_UP:
-            player["x"] -= 0.5 * math.sin(angle_rad)
-            player["z"] -= 0.5 * math.cos(angle_rad)
-        elif key == GLUT_KEY_DOWN:
-            player["x"] += 0.5 * math.sin(angle_rad)
-            player["z"] += 0.5 * math.cos(angle_rad)
-        elif key == GLUT_KEY_LEFT:
-            player["x"] += 0.5 * math.cos(angle_rad)
-            player["z"] -= 0.5 * math.sin(angle_rad)
-        elif key == GLUT_KEY_RIGHT:
-            player["x"] -= 0.5 * math.cos(angle_rad)
-            player["z"] += 0.5 * math.sin(angle_rad)
+    if game_won or game_over: return # Disable controls on win/loss
+    speed = 0.5; angle_rad = math.radians(isometric_angle)
+    dx, dz = 0, 0
+    if key == GLUT_KEY_UP: dx, dz = speed * math.cos(angle_rad), speed * math.sin(angle_rad)
+    elif key == GLUT_KEY_DOWN: dx, dz = -speed * math.cos(angle_rad), -speed * math.sin(angle_rad)
+    elif key == GLUT_KEY_LEFT: dx, dz = speed * math.sin(angle_rad), -speed * math.cos(angle_rad)
+    elif key == GLUT_KEY_RIGHT: dx, dz = -speed * math.sin(angle_rad), speed * math.cos(angle_rad)
+    new_x, new_z = player["x"] + dx, player["z"] + dz
+    boundary = ENV_SIZE - 0.5
+    if not (abs(new_x) > boundary or abs(new_z) > boundary):
+        player["x"], player["z"] = new_x, new_z
 
 def mouse(button, state, x, y):
-    global connected_stars, constellation_timer
-    
-    if constellation_active and button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
-        # Convert mouse coordinates to world coordinates
-        viewport = glGetIntegerv(GL_VIEWPORT)
-        modelview = glGetDoublev(GL_MODELVIEW_MATRIX)
-        projection = glGetDoublev(GL_PROJECTION_MATRIX)
-        
-        # Convert y coordinate to OpenGL format
-        y = viewport[3] - y
-        
-        # Get world coordinates at ground level (y=0)
-        win_x, win_y = x, y
-        win_z = 0.0
-        
-        # Get near and far points
-        near_point = gluUnProject(win_x, win_y, 0.0, modelview, projection, viewport)
-        far_point = gluUnProject(win_x, win_y, 1.0, modelview, projection, viewport)
-        
-        # Find intersection with y=15 plane (where stars are)
+    if game_won or game_over or not constellation_active: return
+    if button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
+        viewport = glGetIntegerv(GL_VIEWPORT); modelview = glGetDoublev(GL_MODELVIEW_MATRIX); projection = glGetDoublev(GL_PROJECTION_MATRIX)
+        ogl_y = viewport[3] - y
+        near_point = gluUnProject(x, ogl_y, 0.0, modelview, projection, viewport)
+        far_point = gluUnProject(x, ogl_y, 1.0, modelview, projection, viewport)
         if far_point[1] - near_point[1] != 0:
             t = (15.0 - near_point[1]) / (far_point[1] - near_point[1])
             intersect_x = near_point[0] + t * (far_point[0] - near_point[0])
             intersect_z = near_point[2] + t * (far_point[2] - near_point[2])
-            
-            # Find the nearest star to the click position
             star_idx = find_nearest_star(intersect_x, intersect_z)
             if star_idx is not None and star_idx not in connected_stars:
                 connected_stars.append(star_idx)
-                print(f"Star {star_idx+1} connected!")
+                connected_stars.sort()
+                print(f"Star #{star_idx + 1} connected!")
                 check_constellation_completion()
 
-def update_timer(value):
-    global constellation_timer, constellation_active
-    
+def update(value):
+    global constellation_timer, constellation_active, player_lives, game_over
     if constellation_active:
         constellation_timer -= 0.1
         if constellation_timer <= 0:
-            print("Time's up! Constellation game ended.")
             constellation_active = False
-        
-    glutTimerFunc(100, update_timer, 0)  # Update every 100ms
+            player_lives -= 1
+            print(f"Time's up! You lost a life. {player_lives} lives remaining.")
+            if player_lives <= 0:
+                print("You are out of lives! Game Over.")
+                game_over = True
+            constellation_timer = 0
+    glutTimerFunc(100, update, 0)
     glutPostRedisplay()
 
 # ---------------------------
@@ -475,29 +351,17 @@ def main():
     glutInit()
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
     glutInitWindowSize(WINDOW_W, WINDOW_H)
-    glutCreateWindow(b"Constellation Game - Connect the Stars")
-    
-    # Set initial player position
-    player["x"] = 0.0
-    player["z"] = 0.0
-
+    glutCreateWindow(b"Constellation Quest")
     glutDisplayFunc(display)
-    glutIdleFunc(display)
     glutKeyboardFunc(keyboard)
     glutSpecialFunc(special_keys)
     glutMouseFunc(mouse)
-    glutTimerFunc(100, update_timer, 0)  # Start timer
-
-    print("Constellation Game")
+    glutTimerFunc(100, update, 0)
+    print("--- Constellation Quest ---")
+    print("Complete one constellation correctly to win!")
     print("Controls:")
-    print("Arrow Keys: Move in the isometric view directions")
-    print("I/K: Zoom in/out")
-    print("J/L: Rotate the isometric view")
-    print("R: Reset position")
-    print("SPACE: Start constellation game")
-    print("LEFT CLICK: Connect stars in the correct order")
-    print("ESC: Quit")
-
+    print("  Arrow Keys: Move | J/L: Rotate | I/K: Zoom")
+    print("  R: Reset Game | SPACE: Start Quest | ESC: Quit")
     glutMainLoop()
 
 if __name__ == "__main__":
