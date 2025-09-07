@@ -1,4 +1,3 @@
-
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -55,7 +54,7 @@ watering = False  # True if player is collecting water
 
 # For fruits on trees
 fruits = { (x,z): 0 for x,z in trees }  # 0 = no fruit, 1 = fruit grown
-fruit_threshold = 100  # Gauge needed to grow fruit    
+fruit_threshold = 100  # Gauge needed to grow fruit      
 
 # ---------------------------
 # Camera & Isometric view
@@ -462,11 +461,11 @@ def draw_fruits():
 
 # Draw the mountain
 #def draw_mountain():
- #   glColor3f(0.5, 0.35, 0.25)  # Brown mountain
-  #  glPushMatrix()
-   # glTranslatef(MOUNTAIN_POS[0], MOUNTAIN_POS[1], MOUNTAIN_POS[2])
-   # glRotatef(-90, 1, 0, 0)
-   # glutSolidCone(MOUNTAIN_RADIUS, MOUNTAIN_HEIGHT, 20, 20)
+   # glColor3f(0.5, 0.35, 0.25)  # Brown mountain
+    #glPushMatrix()
+    #glTranslatef(MOUNTAIN_POS[0], MOUNTAIN_POS[1], MOUNTAIN_POS[2])
+    #glRotatef(-90, 1, 0, 0)
+    #glutSolidCone(MOUNTAIN_RADIUS, MOUNTAIN_HEIGHT, 20, 20)
     #glPopMatrix()
 
 # Draw falling rocks
@@ -640,17 +639,17 @@ def check_riddle_answer():
         # Calculate score based on attempts
         if riddle_attempts == 1:
             riddle_score = 100
-            print("🎉 Perfect! +100 points!")
+            print("Perfect! +100 points!")
         elif riddle_attempts == 2:
             riddle_score = 70
-            print("👍 Good! +70 points!")
+            print("Good! +70 points!")
         else:
             riddle_score = 40
-            print("✅ Correct! +40 points!")
+            print("Correct! +40 points!")
         
         # Award apple
         golden_apples += 1
-        print(f"🍎 You earned a golden apple! Total: {golden_apples}")
+        print(f"You earned a golden apple! Total: {golden_apples}")
         
         # End riddle game
         riddle_active = False
@@ -658,10 +657,10 @@ def check_riddle_answer():
     else:
         # Wrong answer
         riddle_attempts += 1
-        print(f"❌ Wrong answer. Attempt {riddle_attempts}/3")
+        print(f"Wrong answer. Attempt {riddle_attempts}/3")
         
         if riddle_attempts >= 3:
-            print("💔 Failed to solve the riddle. Try watering another tree.")
+            print("Failed to solve the riddle. Try watering another tree.")
             riddle_active = False
             selected_tiles = []  # Reset selected tiles
         else:
@@ -730,19 +729,19 @@ def check_rock_collision():
     global lives
     for rock in rocks:
         distance = math.sqrt((player["x"] - rock["x"])**2 + 
-                            (player["y"] - rock["y"])**2 + 
-                            (player["z"] - rock["z"])**2)
+                             (player["y"] - rock["y"])**2 + 
+                             (player["z"] - rock["z"])**2)
         if distance < 0.8:  # Collision radius
             rocks.remove(rock)
             lives -= 1
-            print(f"💥 Hit by a rock! Lives left: {lives}")
+            print(f"Hit by a rock! Lives left: {lives}")
             return True
     return False
 
 def check_dragon_collision():
     distance = math.sqrt((player["x"] - dragon_pos[0])**2 + 
-                        (player["y"] - dragon_pos[1])**2 + 
-                        (player["z"] - dragon_pos[2])**2)
+                         (player["y"] - dragon_pos[1])**2 + 
+                         (player["z"] - dragon_pos[2])**2)
     return distance < 3.0
 
 
@@ -774,17 +773,17 @@ def keyboard(key, x, y):
     elif key==' ':  # Space key to climb mountain
         if check_mountain_collision():
             is_climbing = True
-            print("🧗 Started climbing the mountain!")
+            print("Started climbing the mountain!")
 
     elif key.lower() == 'n':
      if dragon_healed:
-        print("🌟 Loading next level...")
+        print("Loading next level...")
         # Replace current game with the next level
         next_file = "project2.6.py"  # Path to the next level file
         subprocess.Popen([sys.executable, next_file])
         glutLeaveMainLoop()  # Close current window
      else:
-        print("🐉 You must heal the dragon first before moving to the next level!")
+        print("You must heal the dragon first before moving to the next level!")
 
 def keyboard_up(key, x, y):
     global holding_p
@@ -845,12 +844,12 @@ def water_plant():
             # Start riddle game instead of directly growing fruit
             init_riddles()
             riddle_active = True
-            print(f"🧩 Riddle: {current_riddle}")
+            print(f"Riddle: {current_riddle}")
             print("Right-click on tiles in the correct order to solve the riddle!")
         else:
-            print("💧 Not enough water to grow fruit! Need at least 10 water.")
+            print("Not enough water to grow fruit! Need at least 10 water.")
     else:
-        print("🌳 No trees nearby to water!")
+        print("No trees nearby to water!")
 
     
 def update_watering():
@@ -867,7 +866,7 @@ def update_climbing():
         player["y"] = min(player["y"] + climb_speed, MOUNTAIN_HEIGHT - 1)
         # Check if player reached the top
         if player["y"] >= MOUNTAIN_HEIGHT - 2:
-            print("🏔️ Reached the mountain top!")
+            print("Reached the mountain top!")
 
 def update_rocks():
     global rocks, rock_spawn_timer
@@ -898,11 +897,11 @@ def feed_dragon():
         if golden_apples > 0:
             golden_apples -= 1
             dragon_healed = True
-            print("🐉 Dragon healed! Thank you for the golden apple!")
+            print("Dragon healed! Thank you for the golden apple!")
         else:
-            print("🐉 You have no golden apples to feed the dragon!")
+            print("You have no golden apples to feed the dragon!")
     else:
-        print("🐉 You are too far from the dragon to feed it!")
+        print("You are too far from the dragon to feed it!")
 
 # ---------------------------
 # Display
@@ -956,23 +955,23 @@ def display():
     draw_text(10, 770, f"Apples: {golden_apples} | Lives: {lives} | Water: {watering_gauge}")
     
     if dragon_healed:
-        draw_text(10, 740, "🐉 Dragon healed! Quest complete! ✅")
+        draw_text(10, 740, "Dragon healed! Quest complete! ")
     
     if is_climbing:
-        draw_text(10, 710, "🧗 Climbing mountain - watch for falling rocks!")
+        draw_text(10, 710, "Climbing mountain - watch for falling rocks!")
     
     if check_river_collision():
-        draw_text(10, 680, "💧 Standing in river - collecting water!")
+        draw_text(10, 680, "Standing in river - collecting water!")
     
     # Check if player is near dragon
     dragon_distance = math.sqrt((player["x"] - dragon_pos[0])**2 + 
-                               (player["y"] - dragon_pos[1])**2 + 
-                               (player["z"] - dragon_pos[2])**2)
+                                (player["y"] - dragon_pos[1])**2 + 
+                                (player["z"] - dragon_pos[2])**2)
     if dragon_distance < 5.0:
         if golden_apples > 0:
-            draw_text(10, 650, "🐉 Press F to feed dragon a golden apple!")
+            draw_text(10, 650, "Press F to feed dragon a golden apple!")
         else:
-            draw_text(10, 650, "🐉 Dragon needs golden apples to heal!")
+            draw_text(10, 650, "Dragon needs golden apples to heal!")
     
     glEnable(GL_DEPTH_TEST)
     
@@ -1050,7 +1049,7 @@ def main():
     glutKeyboardUpFunc(keyboard_up)
     glutMouseFunc(mouse) 
 
-    print("🐉 DRAGON QUEST GAME 🐉")
+    print("DRAGON QUEST GAME")
     print("=" * 40)
     print("CONTROLS:")
     print("Arrow Keys: Move around")
@@ -1066,7 +1065,7 @@ def main():
     print("3. Climb the mountain (center) to reach the dragon")
     print("4. Feed golden apples to the dragon to heal it!")
     print("5. Watch out for falling rocks while climbing!")
-    print("\nGOOD LUCK, HERO! 🗡️")
+    print("\nGOOD LUCK, HERO!")
 
     glutMainLoop()
     
