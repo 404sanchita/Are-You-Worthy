@@ -691,9 +691,11 @@ def update_game_state_3():
             if check_collision_general(d, pp, 1.0, 0.3):
                 score_3 += 1
                 hit = True
-                projectiles_to_remove.add(i)
                 dragons.remove(d)
                 break
+
+        if hit:
+            projectiles_to_remove.add(i)
 
     player_projectiles = [pp for i, pp in enumerate(player_projectiles) if i not in projectiles_to_remove]
     glutPostRedisplay()
@@ -773,7 +775,7 @@ def display():
         draw_text(f"Score: {score_3}", 10, WINDOW_H - 30)
         draw_text(f"Hits Taken: {fireball_hits} / {MAX_FIREBALL_HITS}", 10, WINDOW_H - 50)
         draw_text(f"Dragons left: {len(dragons)}", 10, WINDOW_H - 70)
-        draw_text("Space: Shoot | Arrow Keys: Move | J/L: Rotate Gun | I/K: Zoom Camera | R: Reset", 10, 10)
+        draw_text("Space: Shoot | Arrow Keys: Move | G: Rotate 90 degrees | I/K: Zoom Camera | R: Reset", 10, 10)
 
     # Display level completion or game over messages
     if level_1_completed and not game_over:
@@ -860,10 +862,10 @@ def keyboard(key, x, y):
             camera_distance_3 = max(5.0, camera_distance_3 - 2.0)
         elif key_str == 'k':
             camera_distance_3 = min(40.0, camera_distance_3 + 2.0)
-        elif key_str == 'j':
-            player_3["rotation_y"] = (player_3["rotation_y"] + 5) % 360
-        elif key_str == 'l':
-            player_3["rotation_y"] = (player_3["rotation_y"] - 5) % 360
+        elif key_str == 'g': # New key for 90-degree rotation
+            player_3["rotation_y"] += 90.0
+            if player_3["rotation_y"] >= 360.0:
+                player_3["rotation_y"] -= 360.0
         elif key_str == ' ': # Spacebar to shoot
             # Calculate projectile velocity based on player's rotation
             proj_speed = 0.5
