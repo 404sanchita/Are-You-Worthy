@@ -55,7 +55,7 @@ watering = False  # True if player is collecting water
 # For fruits on trees
 fruits = { (x,z): 0 for x,z in trees }  # 0 = no fruit, 1 = fruit grown
 fruit_threshold = 100  # Gauge needed to grow fruit      
-
+golden_apple = {"active": False, "x": 0.0, "z": 0.0}
 # ---------------------------
 # Camera & Isometric view
 # ---------------------------
@@ -451,13 +451,12 @@ def draw_river():
 
 # Draw fruits on trees
 def draw_fruits():
-    glColor3f(1.0, 0.84, 0.0)  # Yellow fruits
-    for (x, z), has_fruit in fruits.items():
-        if has_fruit:
-            glPushMatrix()
-            glTranslatef(x, 3.3, z)
-            glutSolidSphere(0.2, 12, 12)
-            glPopMatrix()
+   if golden_apple["active"]:
+        glColor3f(1.0, 0.84, 0.0)  # golden color
+        glPushMatrix()
+        glTranslatef(golden_apple["x"], 3.3, golden_apple["z"])
+        glutSolidSphere(0.3, 16, 16)
+        glPopMatrix()
 
 # Draw the mountain
 #def draw_mountain():
@@ -586,41 +585,29 @@ def draw_minimap():
     glPopMatrix()
     glMatrixMode(GL_MODELVIEW)
 
-def init_riddles():
-    global current_riddle, current_answer, scrambled_tiles, riddle_attempts, riddle_score, riddle_tiles
+def init_riddles(tree_x, tree_z):
+    global current_riddle, current_answer, scrambled_tiles, riddle_attempts, riddle_score, riddle_tiles, golden_apple
     
     riddles = [
-        {
-            "question": "I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?",
-            "answer": "ECHO"
-        },
-        {
-            "question": "The more you take, the more you leave behind. What am I?",
-            "answer": "FOOTSTEPS"
-        },
-        {
-            "question": "What has keys but can't open locks?",
-            "answer": "PIANO"
-        }
+        {"question": "I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?", "answer": "ECHO"},
+        {"question": "The more you take, the more you leave behind. What am I?", "answer": "FOOTSTEPS"},
+        {"question": "What has keys but can't open locks?", "answer": "PIANO"}
     ]
     
-    # Select a random riddle
     riddle = random.choice(riddles)
     current_riddle = riddle["question"]
     current_answer = riddle["answer"]
-    
-    # Scramble the answer
+
     scrambled = list(current_answer)
     random.shuffle(scrambled)
     scrambled_tiles = scrambled
-    selected_tiles = []
+    selected_tiles.clear()
     riddle_attempts = 0
     riddle_score = 0
     
-    # Position tiles in the world around the player
-    riddle_tiles = []
+    riddle_tiles.clear()
     angle_step = 360 / len(scrambled_tiles)
-    radius = 3.0  # Distance from player
+    radius = 3.0
     
     for i, letter in enumerate(scrambled_tiles):
         angle = math.radians(i * angle_step)
@@ -628,6 +615,11 @@ def init_riddles():
         z = player["z"] + radius * math.sin(angle)
         riddle_tiles.append({"x": x, "z": z, "letter": letter, "collected": False})
     
+    # 🌟 Place golden apple on the watered tree, not random
+    golden_apple["active"] = True
+    golden_apple["x"] = tree_x
+    golden_apple["z"] = tree_z
+
 def check_riddle_answer():
     global riddle_attempts, riddle_score, riddle_active, golden_apples, selected_tiles
     
@@ -744,6 +736,14 @@ def check_dragon_collision():
                          (player["z"] - dragon_pos[2])**2)
     return distance < 3.0
 
+def check_golden_apple_collision():
+    global golden_apples
+    if golden_apple["active"]:
+        distance = math.sqrt((player["x"] - golden_apple["x"])**2 + (player["z"] - golden_apple["z"])**2)
+        if distance < 1.5:  # close enough
+            golden_apples += 1
+            golden_apple["active"] = False
+            print(f"🍏 Golden apple collected! Total: {golden_apples}")
 
 # ---------------------------
 # Input
@@ -841,11 +841,11 @@ def water_plant():
             nearest_tree = (x, z)
     
     # Check if player is near a tree and has enough water
-    if min_distance < 2.0:  # Increased range for easier watering
+    if nearest_tree and min_distance < 2.0:
         if watering_gauge >= 10:
             watering_gauge -= 10
-            # Start riddle game instead of directly growing fruit
-            init_riddles()
+            # Start riddle game, passing the watered tree coords
+            init_riddles(nearest_tree[0], nearest_tree[1])
             riddle_active = True
             print(f"Riddle: {current_riddle}")
             print("Right-click on tiles in the correct order to solve the riddle!")
@@ -853,6 +853,7 @@ def water_plant():
             print("Not enough water to grow fruit! Need at least 10 water.")
     else:
         print("No trees nearby to water!")
+
 
     
 def update_watering():
