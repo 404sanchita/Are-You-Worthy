@@ -912,7 +912,7 @@ def keyboard(key, x, y):
             isometric_angle_3 = (isometric_angle_3 + 5) % 360
         elif key_str == 'u':
             player_3["orientation"] = (player_3["orientation"] + 90) % 360
-        elif key_str == 'h':  # Check for the spacebar's byte value
+        elif key_str == 'h':  
             # Calculate projectile velocity based on player orientation
             angle_rad = math.radians(player_3["orientation"] - 90)
 
@@ -1012,4 +1012,5 @@ def main():
     glutMainLoop()
 
 if __name__ == "__main__":
+
     main()
